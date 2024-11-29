@@ -19,6 +19,9 @@ router.all(
     if (resdata.method === "date_wise") {
       const { fromdate, todate } = req.body;
 
+  if(!fromdate || !todate){
+    return res.status(400).json({ message: "fromdate and todate are required"})
+  }
       if (new Date(fromdate) >= new Date(todate)) {
         return res.status(400).json({
           success: false,
