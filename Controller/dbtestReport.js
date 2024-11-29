@@ -46,7 +46,7 @@ router.all(
       SELECT user_id, username,
       SUM(total) AS total_sms_summary
       FROM db_test.tbl_sms_summary
-      JOIN db_test.tbl_users ON db_test.tbl_sms_summary.user_id = tbl_users.id
+      JOIN db_test.tbl_users ON db_test.tbl_sms_summary.user_id = db_test.tbl_users.id
       WHERE date BETWEEN ? AND ?
       ${userFilter}
       GROUP BY user_id
@@ -170,7 +170,7 @@ router.all(
       SELECT user_id, username,
       SUM(total) AS total_voice_summary
       FROM db_test.tbl_voice_summary
-      JOIN db_test.tbl_users ON tb_test.tbl_voice_summary.user_id = tbl_users.id
+      JOIN db_test.tbl_users ON tb_test.tbl_voice_summary.user_id = db_test.tbl_users.id
       WHERE date BETWEEN ? AND ?
       ${userFilter}
       GROUP BY user_id
@@ -181,7 +181,7 @@ router.all(
       SELECT user_id, username,
       SUM(delivered + clicked + bounced + sent + opened + submitted) AS total_email_summary
       FROM db_test.tbl_email_summary
-      JOIN db_test.tbl_users ON db_test.tbl_email_summary.user_id = tbl_users.id
+      JOIN db_test.tbl_users ON db_test.tbl_email_summary.user_id = db_test.tbl_users.id
       WHERE date BETWEEN ? AND ?
       ${userFilter}
       GROUP BY user_id
