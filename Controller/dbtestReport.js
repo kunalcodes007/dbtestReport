@@ -30,7 +30,10 @@ router.all(
       if (!fromdate || !todate) {
         return res
           .status(400)
-          .json({ message: "fromdate and todate are required" });
+          .json({
+            success: false,
+            message: "fromdate and todate are required",
+          });
       }
 
       if (new Date(fromdate) >= new Date(todate)) {
@@ -40,10 +43,9 @@ router.all(
         });
       }
 
-      try {
-        const userFilter = retr_user_id === "all" ? "" : "AND user_id = ?";
+      const userFilter = retr_user_id === "all" ? "" : "AND user_id = ?";
 
-        const smsQuery = `
+      const smsQuery = `
       SELECT user_id, username,
       SUM(total) AS total_sms_summary
       FROM db_test.tbl_sms_summary
@@ -52,13 +54,13 @@ router.all(
       ${userFilter}
       GROUP BY user_id
     `;
-        const smsParams =
-          retr_user_id === "all"
-            ? [fromdate, todate]
-            : [fromdate, todate, retr_user_id];
-        const smsResults = await db(smsQuery, smsParams);
+      const smsParams =
+        retr_user_id === "all"
+          ? [fromdate, todate]
+          : [fromdate, todate, retr_user_id];
+      const smsResults = await db(smsQuery, smsParams);
 
-        const query3 = `
+      const query3 = `
       SELECT 
           q1.user_id,
           q1.username,
@@ -139,51 +141,51 @@ router.all(
           ) q2
       ON q1.user_id = q2.user_id;
     `;
-        const tempParams =
-          retr_user_id === "all"
-            ? [
-                fromdate,
-                todate,
-                fromdate,
-                todate,
-                fromdate,
-                todate,
-                fromdate,
-                todate,
-              ]
-            : [
-                fromdate,
-                todate,
-                retr_user_id,
-                fromdate,
-                todate,
-                retr_user_id,
-                fromdate,
-                todate,
-                retr_user_id,
-                fromdate,
-                todate,
-                retr_user_id,
-              ];
-        const temp_result = await db(query3, tempParams);
+      const tempParams =
+        retr_user_id === "all"
+          ? [
+              fromdate,
+              todate,
+              fromdate,
+              todate,
+              fromdate,
+              todate,
+              fromdate,
+              todate,
+            ]
+          : [
+              fromdate,
+              todate,
+              retr_user_id,
+              fromdate,
+              todate,
+              retr_user_id,
+              fromdate,
+              todate,
+              retr_user_id,
+              fromdate,
+              todate,
+              retr_user_id,
+            ];
+      const temp_result = await db(query3, tempParams);
 
-        const voiceQuery = `
+      const voiceQuery = `
       SELECT user_id, username,
       SUM(total) AS total_voice_summary
       FROM db_test.tbl_voice_summary
-      JOIN db_test.tbl_users ON tb_test.tbl_voice_summary.user_id = db_test.tbl_users.id
+      JOIN db_test.tbl_users ON db_test.tbl_voice_summary.user_id = db_test.tbl_users.id
       WHERE date BETWEEN ? AND ?
       ${userFilter}
       GROUP BY user_id
     `;
-        const voiceParams =
-          retr_user_id === "all"
-            ? [fromdate, todate]
-            : [fromdate, todate, retr_user_id];
+      const voiceParams =
+        retr_user_id === "all"
+          ? [fromdate, todate]
+          : [fromdate, todate, retr_user_id];
 
-        const voiceResults = await db(voiceQuery, voiceParams);
+      const voiceResults = await db(voiceQuery, voiceParams);
 
-        const emailQuery = `
+      const emailQuery = `
       SELECT user_id, username,
       SUM(delivered + clicked + bounced + sent + opened + submitted) AS total_email_summary
       FROM db_test.tbl_email_summary
@@ -192,50 +194,43 @@ router.all(
       ${userFilter}
       GROUP BY user_id
     `;
-        const emailParams =
-          retr_user_id === "all"
-            ? [fromdate, todate]
-            : [fromdate, todate, retr_user_id];
-        const emailResults = await db(emailQuery, emailParams);
+      const emailParams =
+        retr_user_id === "all"
+          ? [fromdate, todate]
+          : [fromdate, todate, retr_user_id];
+      const emailResults = await db(emailQuery, emailParams);
 
-        const combinedData = {};
-        const addData = (results, summaryField) => {
-          results.forEach((item) => {
-            const { user_id, username } = item;
-            if (!combinedData[user_id]) {
-              combinedData[user_id] = {
-                user_id: parseInt(user_id),
-                username,
-                total_sms_summary: 0,
-                total_voice_summary: 0,
-                total_email_summary: 0,
-                grand_total_summary: 0,
-              };
-            }
-            combinedData[user_id][summaryField] += parseInt(
-              item[summaryField] || 0
-            );
-          });
-        };
-
-        addData(smsResults, "total_sms_summary");
-        addData(temp_result, "grand_total_summary");
-        addData(voiceResults, "total_voice_summary");
-        addData(emailResults, "total_email_summary");
-
-        const finalData = Object.values(combinedData);
-
-        res.status(200).json({
-          success: true,
-          data: finalData,
+      const combinedData = {};
+      const addData = (results, summaryField) => {
+        results.forEach((item) => {
+          const { user_id, username } = item;
+          if (!combinedData[user_id]) {
+            combinedData[user_id] = {
+              user_id: parseInt(user_id),
+              username,
+              total_sms_summary: 0,
+              total_voice_summary: 0,
+              total_email_summary: 0,
+              grand_total_summary: 0,
+            };
+          }
+          combinedData[user_id][summaryField] += parseInt(
+            item[summaryField] || 0
+          );
         });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        res.status(400).json({
-          success: false,
-          message: "Error fetching summary report",
-        });
-      }
+      };
+
+      addData(smsResults, "total_sms_summary");
+      addData(temp_result, "grand_total_summary");
+      addData(voiceResults, "total_voice_summary");
+      addData(emailResults, "total_email_summary");
+
+      const finalData = Object.values(combinedData);
+
+      res.status(200).json({
+        success: true,
+        data: finalData,
+      });
     } else {
       res.status(400).json({ success: false, message: "invalid method" });
     }
