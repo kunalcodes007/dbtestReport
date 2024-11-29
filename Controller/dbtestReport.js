@@ -56,9 +56,9 @@ GROUP BY user_id
         const query3 = `SELECT 
     q1.user_id,
     q1.username,
-    COALESCE(q1.db_test.total_whatsapp_summary, 0) AS total_whatsapp_summary,
+    COALESCE(q1.total_whatsapp_summary, 0) AS total_whatsapp_summary,
     COALESCE(q2.db_test.total_billing_summary, 0) AS total_billing_summary,
-    COALESCE(q1.db_test.total_whatsapp_summary, 0) + COALESCE(q2.db_test.total_billing_summary, 0) AS grand_total_summary
+    COALESCE(q1.total_whatsapp_summary, 0) + COALESCE(q2.db_test.total_billing_summary, 0) AS grand_total_summary
 FROM 
     (
         SELECT
@@ -94,9 +94,9 @@ UNION
 SELECT 
     q2.user_id,
     q2.username,
-    COALESCE(q1.db_test.total_whatsapp_summary, 0) AS total_whatsapp_summary,
+    COALESCE(q1.total_whatsapp_summary, 0) AS total_whatsapp_summary,
     COALESCE(q2.db_test.total_billing_summary, 0) AS total_billing_summary,
-    COALESCE(q1.db_test.total_whatsapp_summary, 0) + COALESCE(q2.db_test.total_billing_summary, 0) AS grand_total_summary
+    COALESCE(q1.total_whatsapp_summary, 0) + COALESCE(q2.db_test.total_billing_summary, 0) AS grand_total_summary
 FROM 
     (
         SELECT
@@ -161,7 +161,7 @@ WHERE date BETWEEN ? AND ?
 GROUP BY user_id
 `;
         const emailResults = await db(emailQuery, [fromdate, todate]);
-        
+
         const combinedData = {};
         const addData = (results, summaryField, grandTotalField) => {
           results.forEach((item) => {
