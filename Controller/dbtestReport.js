@@ -155,7 +155,7 @@ GROUP BY user_id
         const emailQuery = `
 SELECT user_id, username,
 SUM(delivered + clicked + bounced + sent + opened + submitted) AS total_email_summary
-db_test.FROM tbl_email_summary
+FROM db_test.tbl_email_summary
 JOIN db_test.tbl_users ON db_test.tbl_email_summary.user_id = tbl_users.id
 WHERE date BETWEEN ? AND ?
 GROUP BY user_id
