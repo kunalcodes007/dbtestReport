@@ -18,7 +18,7 @@ router.all(
     }
 
     if (resdata.method === "date_wise") {
-      const {  fromdate, todate, retr_user_id } = resdata;
+      const { fromdate, todate, retr_user_id } = resdata;
 
       if (!retr_user_id) {
         return res.status(400).json({
@@ -26,12 +26,13 @@ router.all(
           message: "'retr_user_id' is required.",
         });
       }
+
       if (!fromdate || !todate) {
         return res
           .status(400)
           .json({ message: "fromdate and todate are required" });
       }
-  
+
       if (new Date(fromdate) >= new Date(todate)) {
         return res.status(400).json({
           success: false,
@@ -175,7 +176,12 @@ router.all(
       ${userFilter}
       GROUP BY user_id
     `;
-        const voiceResults = await db(voiceQuery, smsParams);
+        const voiceParams =
+          retr_user_id === "all"
+            ? [fromdate, todate]
+            : [fromdate, todate, retr_user_id];
+
+        const voiceResults = await db(voiceQuery, voiceParams);
 
         const emailQuery = `
       SELECT user_id, username,
@@ -186,7 +192,11 @@ router.all(
       ${userFilter}
       GROUP BY user_id
     `;
-        const emailResults = await db(emailQuery, smsParams);
+        const emailParams =
+          retr_user_id === "all"
+            ? [fromdate, todate]
+            : [fromdate, todate, retr_user_id];
+        const emailResults = await db(emailQuery, emailParams);
 
         const combinedData = {};
         const addData = (results, summaryField) => {
