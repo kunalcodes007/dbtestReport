@@ -9,7 +9,7 @@ const auth = async (req, res, next) => {
       return next(new ErrorHandler("Missing User ID and Token", 400));
     }
 
-    const query = "SELECT token FROM tbl_users WHERE id = ?";
+    const query = "SELECT token FROM db_test.tbl_users WHERE id = ?";
     const authData = await db(query, [resdata.user_id]);
 
     if (!authData.length || authData[0].token !== resdata.token) {
