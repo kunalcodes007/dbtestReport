@@ -8,7 +8,6 @@ const urlShortLinkSchema = new mongoose.Schema(
     main_url: { type: String, required: true },
     short_url: { type: String, required: true },
     urlkey: { type: String, required: true },
-    created: { type: Date, default: Date.now },
     ip: { type: String },
     url_clickcount: { type: Number, default: 0 },
     url_city: { type: String },
@@ -16,7 +15,10 @@ const urlShortLinkSchema = new mongoose.Schema(
     camp_id: { type: String, required: true },
     submit_via: { type: String, required: true },
     country_code: { type: String, required: true },
-  },
+    created: {
+      type: Date,
+      default: () => new Date().toISOString().slice(0, 19).replace("T", " "),
+    }},
   { collection: "url_short_link_withtrack_whatsapp" } 
 );
 
