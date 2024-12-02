@@ -4,9 +4,10 @@ const db = require("../config/databaseconnection");
 const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
 const auth = require("../Middleware/mongoAuth");
 const urlShortLinkModel = require("../Models/urlShortLinkSchema");
-const { Parser } = require("json2csv");
+const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
+
 router.all(
   "/clickreport_download_camp_csv",
   auth,
@@ -56,30 +57,42 @@ router.all(
         });
       }
 
-      const fields = [
-        { label: "Country Code", value: "country_code" },
-        { label: "Brand Number", value: "sender" },
-        { label: "Sender", value: "sender" },
-        { label: "ClickCount", value: "url_clickcount" },
-        { label: "Device", value: "url_device" },
-        { label: "Submit Via", value: "submit_via" },
-        { label: "IP", value: "ip" },
-        "created",
+      const formattedData = data.map((item) => ({
+        "Country Code": item.country_code,
+        "Brand Number": item.sender,
+        Sender: item.sender,
+        ClickCount: item.url_clickcount,
+        Device: item.url_device,
+        "Submit Via": item.submit_via,
+        IP: item.ip,
+        Created: item.created,
+      }));
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+      worksheet["!cols"] = [
+        { wch: 15 },
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 10 }, 
+        { wch: 10 }, 
+        { wch: 15 },
+        { wch: 20 }, 
+        { wch: 25 }, 
       ];
-      const opts = { fields };
-      const parser = new Parser(opts);
-      const csv = parser.parse(data);
 
-      const tempDir = path.join(__dirname, "../temp");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 
+      const tempDir = path.join(__dirname, "../ReportFiles");
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      const fileName = `click_report_camp_${camp_id}.csv`;
-      const filePath = path.join(__dirname, "../temp", fileName);
+      const fileName = `click_report_camp_${camp_id}.xlsx`;
+      const filePath = path.join(__dirname, "../ReportFiles", fileName);
 
-      fs.writeFileSync(filePath, csv);
+      XLSX.writeFile(workbook, filePath);
 
       res.download(filePath, fileName, (err) => {
         if (err) {
@@ -89,10 +102,10 @@ router.all(
             .json({ success: false, message: "File download failed" });
         }
 
-        // fs.unlinkSync(filePath);
+        fs.unlinkSync(filePath);
       });
     } else {
-      res.status(400).json({ success: false, message: "invalid method" });
+      res.status(400).json({ success: false, message: "Invalid method" });
     }
   })
 );
