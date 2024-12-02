@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
-const { Parser } = require("json2csv");
 const auth = require("../Middleware/mongoAuth");
 const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
 const urlShortLinkModel = require("../Models/urlShortLinkSchema");
+const XLSX = require("xlsx");
 
 router.all(
   "/clickreport_download_api_csv",
@@ -37,16 +37,6 @@ router.all(
         });
       }
 
-      //   const fromDateParsed = new Date(fromdate);
-      //   const toDateParsed = new Date(todate);
-
-      //   if (isNaN(fromDateParsed) || isNaN(toDateParsed)) {
-      //     return res.status(400).json({
-      //       success: false,
-      //       message: "Invalid date format for fromdate or todate.",
-      //     });
-      //   }
-
       const data = await urlShortLinkModel.find(
         {
           user_id,
@@ -72,29 +62,42 @@ router.all(
         });
       }
 
-      const fields = [
-        { label: "Country Code", value: "country_code" },
-        { label: "Mobile Number", value: "phone_number" },
-        { label: "Brand Number", value: "sender" },
-        { label: "ClickCount", value: "url_clickcount" },
-        { label: "Device", value: "url_device" },
-        { label: "Submit Via", value: "submit_via" },
-        { label: "IP", value: "ip" },
-        "created",
-      ];
-      const opts = { fields };
-      const parser = new Parser(opts);
-      const csv = parser.parse(data);
+      const formattedData = data.map((item) => ({
+        "Country Code": item.country_code ,
+        "Mobile Number": item.phone_number ,
+        "Brand Number": item.sender ,
+        ClickCount: item.url_clickcount || 0,
+        Device: item.url_device ,
+        "Submit Via": item.submit_via ,
+        IP: item.ip ,
+        Created: item.created ,
+      }));
 
-      const tempDir = path.join(__dirname, "../temp");
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+      worksheet["!cols"] = [
+        { wch: 15 }, 
+        { wch: 20 }, 
+        { wch: 20 }, 
+        { wch: 12 }, 
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 15 },
+        { wch: 25 }, 
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+
+      const tempDir = path.join(__dirname, "../ReportFiles");
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      const fileName = `click_report_api.csv`;
+      const fileName = `click_report_api.xlsx`;
       const filePath = path.join(tempDir, fileName);
 
-      fs.writeFileSync(filePath, csv);
+      XLSX.writeFile(workbook, filePath);
 
       res.download(filePath, fileName, (err) => {
         if (err) {
@@ -104,7 +107,7 @@ router.all(
             .json({ success: false, message: "File download failed" });
         }
 
-        // fs.unlinkSync(filePath);
+        fs.unlinkSync(filePath);
       });
     } else {
       res.status(400).json({ success: false, message: "Invalid method" });
