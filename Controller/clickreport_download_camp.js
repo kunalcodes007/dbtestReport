@@ -84,13 +84,13 @@ router.all(
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 
-      const tempDir = path.join(__dirname, "/ReportFiles",`click_report_camp_${camp_id}.xlsx`);
+      const tempDir = path.join(__dirname, "/ReportFiles",`click_report_camp.xlsx`);
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
       const fileName = `click_report_camp_${camp_id}.xlsx`;
-      const filePath = path.join(__dirname, "../ReportFiles", fileName);
+      const filePath = path.join(tempDir, fileName, );
 
       XLSX.writeFile(workbook, filePath);
 
