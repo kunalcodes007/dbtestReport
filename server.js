@@ -8,12 +8,14 @@ const userSummaryReport=require("./Controller/userSummaryReport")
 const withtrack_whatsapp=require("./Controller/withtrack_whatsapp")
 const clickreport_download_camp=require("./Controller/clickreport_download_camp")
 const clickreport_download_api=require("./Controller/clickreport_download_api")
+const fixed_url=require("./Controller/fixed_url")
 app.use(express.json());
 app.use("/api", dbtestReport);
 app.use("/api",userSummaryReport)
 app.use("/api",withtrack_whatsapp)
 app.use("/api",clickreport_download_camp)
 app.use("/api",clickreport_download_api)
+app.use("/api",fixed_url)
 app.use(express.urlencoded({ extended: true }));
 
 database();
