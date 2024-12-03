@@ -89,7 +89,7 @@ router.all(
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 
-      const tempDir = path.join(__dirname, "/ReportFiles",'click_report_api.xlsx');
+      const tempDir = path.join(__dirname, "../ReportFiles",'click_report_api.xlsx');
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
