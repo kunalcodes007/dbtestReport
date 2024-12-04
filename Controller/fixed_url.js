@@ -55,16 +55,19 @@ router.all(
     //       .status(400)
     //       .json({ success: false, message: "status can't be empty" });
     //   }
-      if (!brandnumber) {
-        return res
-          .status(400)
-          .json({ success: false, message: "brandnumber can't be empty" });
-      }
+    if(channel === "whatsapp"){
+        if (!brandnumber) {
+          return res
+            .status(400)
+            .json({ success: false, message: "brandnumber can't be empty" });
+        }
+    }
     //   if (!channel) {
     //     return res
     //       .status(400)
     //       .json({ success: false, message: "channel can't be empty" });
     //   }
+
       if ( !channel || !["sms", "whatsapp"].includes((channel))) {
         return res
           .status(400)
