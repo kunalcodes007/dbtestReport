@@ -23,16 +23,23 @@ router.all(
       return regex.test(main_url);
     };
 
-    const generateUrlAndKeyValue = (brandnumber) => {
-      const randomString = Math.random().toString(36).substring(2, 8);
-      const url = `https://0kb/${brandnumber}/B${randomString}`;
-      const key_value = randomString;
-      return { url, key_value };
-    };
-
     if (resdata.method === "create") {
-      const { user_id, main_url, created_date, channel, status, brandnumber } =
-        resdata;
+      const {
+        user_id,
+        main_url,
+        created_date,
+        channel,
+        status,
+        brandnumber,
+        username,
+      } = resdata;
+
+      if (!username) {
+        return res
+          .status(400)
+          .json({ success: false, message: "username is required" });
+      }
+
       if (!user_id) {
         return res
           .status(400)
@@ -50,31 +57,19 @@ router.all(
           .json({ success: false, message: "created_date can't be empty" });
       }
 
-    //   if (!status) {
-    //     return res
-    //       .status(400)
-    //       .json({ success: false, message: "status can't be empty" });
-    //   }
-    if(channel === "whatsapp"){
+      if (channel === "whatsapp") {
         if (!brandnumber) {
           return res
             .status(400)
             .json({ success: false, message: "brandnumber can't be empty" });
         }
-    }
-    //   if (!channel) {
-    //     return res
-    //       .status(400)
-    //       .json({ success: false, message: "channel can't be empty" });
-    //   }
+      }
 
-      if ( !channel || !["sms", "whatsapp"].includes((channel))) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "channel must be either 'sms' or 'whatsapp'",
-          });
+      if (!channel || !["sms", "whatsapp"].includes(channel)) {
+        return res.status(400).json({
+          success: false,
+          message: "channel must be either 'sms' or 'whatsapp'",
+        });
       }
 
       if (status !== undefined && ![0, 1].includes(Number(status))) {
@@ -82,8 +77,28 @@ router.all(
           .status(400)
           .json({ success: false, message: "status must be either 0 or 1" });
       }
-      const { url, key_value } = generateUrlAndKeyValue(brandnumber);
-    
+
+      const username_validate =
+        "SELECT username FROM db_test.tbl_users WHERE id = ?";
+      const authData = await db(username_validate, [resdata.user_id]);
+
+      if (!authData.length || authData[0].username !== resdata.username) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "invalid username for the provided userid",
+          });
+      }
+      const generateUrlAndKeyValue = (brandnumber, username) => {
+        const randomString = Math.random().toString(36).substring(2, 7);
+        const firstalpha = username.charAt(0);
+        const url = `https://0kb/${brandnumber}/B${randomString}${firstalpha}`;
+        const key_value = `${randomString}${firstalpha}`;
+        return { url, key_value };
+      };
+      const { url, key_value } = generateUrlAndKeyValue(brandnumber, username);
+
       if (!isValidUrl(main_url)) {
         return res
           .status(400)
@@ -103,7 +118,6 @@ router.all(
       return res.status(200).json({
         success: true,
         message: "data inserted successfully",
-        
       });
     } else if (resdata.method === "update") {
       const { _id, main_url, created_date, channel, status } = resdata;
@@ -121,12 +135,10 @@ router.all(
       }
 
       if (channel && !["sms", "whatsapp"].includes(channel)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "channel must be either 'sms' or 'whatsapp'",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "channel must be either 'sms' or 'whatsapp'",
+        });
       }
 
       if (status !== undefined && ![0, 1].includes(Number(status))) {
@@ -158,7 +170,6 @@ router.all(
       return res.status(200).json({
         success: true,
         message: "data updated successfully",
-       
       });
     } else if (resdata.method === "delete") {
       const { _id } = resdata;
@@ -174,14 +185,12 @@ router.all(
         return res.status(404).json({
           success: false,
           message: "Record not found",
-          
         });
       }
 
       return res.status(200).json({
         success: true,
         message: "data deleted successfully",
-        
       });
     } else if (resdata.method === "retrieve") {
       const retrieve_all = await fixedurlschema.find({});
@@ -198,8 +207,10 @@ router.all(
           .json({ success: false, message: "_id is required for delete" });
       }
       const retrieve_id = await fixedurlschema.findById(_id);
-      if(!_id){
-        return res.status(200).json({success:false,message:"id not found"})
+      if (!_id) {
+        return res
+          .status(200)
+          .json({ success: false, message: "id not found" });
       }
       return res.status(200).json({
         success: true,
