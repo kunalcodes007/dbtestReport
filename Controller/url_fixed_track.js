@@ -204,6 +204,9 @@ router.all(
         short_url: row.short_url,
         channel: row.channel,
         created: row.created,
+        ip:row.ip,
+        city:row.url_city,
+        device:row.url_device
         // count: row.count,
       }));
     //   console.log("data", data);
