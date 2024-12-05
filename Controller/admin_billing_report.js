@@ -56,38 +56,79 @@ router.all(
       }
 
       const get_parent_userid = async (user_type, parent_id) => {
+        const userCheckQuery = `
+          SELECT id, user_type 
+          FROM db_test.tbl_users 
+          WHERE id = ? AND user_type = ?
+        `;
+
+        const userCheckResult = await db(userCheckQuery, [
+          parent_id,
+          user_type,
+        ]);
+
+        if (userCheckResult.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: `User with user_type '${user_type}' and uid '${parent_id}' does not exist.`,
+          });
+        }
+
+        // const retr_id_check=`
+        //   SELECT id, user_type
+        //   FROM db_test.tbl_users
+        //   WHERE id = ? AND user_type = ?
+        // `;
+        // const retr_id_result = await db(retr_id_check, [retr_user_id, user_type]);
+        // if (retr_id_result.length === 0) {
+        //   return res.status(400).json({
+        //     success: false,
+        //     message: `no data`,
+        //   });
+        // }
+
         let query = "";
         if (user_type === "admin") {
           query = `
-                SELECT c.id
-                FROM db_test.tbl_users c
-                JOIN db_test.tbl_users p ON c.parent = p.id
-                WHERE c.user_type = 'client'  AND (p.user_type = 'emp' or c.parent=1);
-              `;
+            SELECT c.id
+            FROM db_test.tbl_users c
+            JOIN db_test.tbl_users p ON c.parent = p.id
+            WHERE c.user_type = 'client' AND (p.user_type = 'emp' OR c.parent = 1);
+          `;
         } else if (user_type === "reseller") {
           query = `
-                SELECT c.id
-                FROM db_test.tbl_users c
-                JOIN db_test.tbl_users p ON c.parent = p.id
-                WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'reseller';
-              `;
+            SELECT c.id
+            FROM db_test.tbl_users c
+            JOIN db_test.tbl_users p ON c.parent = p.id
+            WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'reseller';
+          `;
         } else if (user_type === "emp") {
           query = `
-                  SELECT c.id
-                  FROM db_test.tbl_users c
-                  JOIN db_test.tbl_users p ON c.parent = p.id
-                  WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'emp';
-                `;
+            SELECT c.id
+            FROM db_test.tbl_users c
+            JOIN db_test.tbl_users p ON c.parent = p.id
+            WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'emp';
+          `;
         } else {
           return res
             .status(400)
-            .json({ success: false, message: "invalid user_type" });
+            .json({ success: false, message: "Invalid user_type" });
         }
 
         const results = await db(query, [parent_id]);
         return results.map((row) => row.id);
       };
+         
+      const validate_reseller_user=async (retr_user_id,uid)=>{
+        const validate_query=`select parent from db_test.tbl_users where id = ? `
+         
+        const validate_result=await db(validate_query,[retr_user_id])
+         
+        if(validate_result[0].parent !== uid ){
+           return res.status(400).json({success:false,message:"no record found"})
+        }
 
+      }
       let userFilter = "";
       let userParams = [fromdate, todate];
       if (retr_user_id === "all") {
@@ -118,6 +159,19 @@ router.all(
               data: [],
             });
           }
+        } else if (user_type === "reseller") {
+          parentIds = await get_parent_userid(user_type, uid);
+          if (parentIds.length > 0) {
+            userFilter = `AND user_id IN (${parentIds
+              .map(() => "?")
+              .join(",")})`;
+            userParams = [...userParams, ...parentIds];
+          } else {
+            return res.status(200).json({
+              success: true,
+              data: [],
+            });
+          }
         }
 
         //   if (user_type === "admin" || user_type === "reseller") {
@@ -133,8 +187,15 @@ router.all(
         //     }
         //   }
       } else {
-        userFilter = "AND user_id = ?";
-        userParams.push(retr_user_id);
+        if (user_type === "admin") {
+          userFilter = "AND user_id = ?";
+          userParams.push(retr_user_id);
+        } else {
+          validate_reseller_user(retr_user_id,uid);
+          userFilter = "AND user_id = ?";
+          userParams.push(retr_user_id);
+          
+        }
       }
 
       const smsQuery = `
@@ -190,7 +251,7 @@ router.all(
         ON q1.user_id = q2.user_id;
       `;
 
-      const whatsappBillingParams = [...userParams, ...userParams]; 
+      const whatsappBillingParams = [...userParams, ...userParams];
       console.log("WhatsApp Query:", whatsappBillingQuery);
       console.log("WhatsApp Params:", whatsappBillingParams);
 
