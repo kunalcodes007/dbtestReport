@@ -93,7 +93,7 @@ router.all(
       const generateUrlAndKeyValue = (brandnumber, username) => {
         const randomString = Math.random().toString(36).substring(2, 7);
         const firstalpha = username.charAt(0);
-        const url = `https://0kb/${brandnumber}/B${randomString}${firstalpha}`;
+        const url = `https://0kb.in/${brandnumber}/B${randomString}${firstalpha}`;
         const key_value = `${randomString}${firstalpha}`;
         return { url, key_value };
       };
