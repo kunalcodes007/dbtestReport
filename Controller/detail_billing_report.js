@@ -18,6 +18,18 @@ router.all(
 
     if (resdata.method === "detailReport") {
       const { retr_user_id, fromDate, toDate } = req.body;
+
+      if(!retr_user_id){
+        return res.status(400).json({success:false,message:"retr_user_id is required"})
+      }
+       
+      if(!fromDate){
+        return res.status(400).json({success:false,message:"from date is required"})
+      }
+
+      if(!toDate){
+        return res.status(400).json({success:false,message:"to date is required"})
+      }
       if (new Date(fromDate) >= new Date(toDate)) {
         return res.status(400).json({
           success: false,
@@ -125,18 +137,28 @@ GROUP BY
     template_type, 
     country_code;
     `;
-    const whatsapp_camp_result = await db(whatsapp_camp_query, [retr_user_id, fromDate, toDate]);
+      const whatsapp_camp_result = await db(whatsapp_camp_query, [
+        retr_user_id,
+        fromDate,
+        toDate,
+      ]);
 
       const combinedData = {
-        sms: sms_results ,
-        email: email_results ,
-        voice: voice_result ,
-        whatsapp_api: whatsapp_result ,
-        whatsapp_campaign:whatsapp_camp_result
+        sms: sms_results,
+        email: email_results,
+        voice: voice_result,
+        whatsapp_api: whatsapp_result,
+        whatsapp_campaign: whatsapp_camp_result,
       };
 
       const isAllDataEmpty = Object.values(combinedData).every(
-        (data) => !data || data.length === 0 || (Array.isArray(data) && data.every((row) => Object.values(row).every((val) => val === null)))
+        (data) =>
+          !data ||
+          data.length === 0 ||
+          (Array.isArray(data) &&
+            data.every((row) =>
+              Object.values(row).every((val) => val === null)
+            ))
       );
 
       if (isAllDataEmpty) {
