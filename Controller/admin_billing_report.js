@@ -251,8 +251,8 @@ router.all(
       `;
 
       const whatsappBillingParams = [...userParams, ...userParams];
-      console.log("WhatsApp Query:", whatsappBillingQuery);
-      console.log("WhatsApp Params:", whatsappBillingParams);
+      // console.log("WhatsApp Query:", whatsappBillingQuery);
+      // console.log("WhatsApp Params:", whatsappBillingParams);
 
       const whatsappBillingResults = await db(
         whatsappBillingQuery,
