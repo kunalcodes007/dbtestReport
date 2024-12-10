@@ -127,7 +127,6 @@ router.all(
         if(validate_result[0].parent !== uid ){
            return res.status(400).json({success:false,message:"no record found"})
         }
-
       }
       let userFilter = "";
       let userParams = [fromdate, todate];
