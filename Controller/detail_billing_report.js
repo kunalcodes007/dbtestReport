@@ -74,6 +74,7 @@ WHERE
         fromDate,
         toDate,
       ]);
+      
       // console.log("email", email_results);
 
       const voice_query = `SELECT 
@@ -122,7 +123,7 @@ WHERE
       SELECT     
       country_code,
     template_type,
-    SUM(wp_price) AS total_wp_price,
+    wp_price as per_wp_price,
     SUM(total_count) AS total_count, 
     SUM(delivered_count) AS total_delivered, 
     SUM(failed_count) AS total_failed,
