@@ -143,14 +143,38 @@ GROUP BY
         fromDate,
         toDate,
       ]);
+      const agent_query = `
+      SELECT 
+        allow_agent,
+        peragent_cost
+      FROM db_authkey.tbl_users 
+      WHERE created >= ? 
+        AND created <= ? 
+        AND id = ?
+    `;
+    const agent_results = await db(agent_query, [
+      fromDate,
+      toDate,
+      retr_user_id,
+    ]);
 
-      const combinedData = {
-        sms: sms_results,
-        email: email_results,
-        voice: voice_result,
-        whatsapp_api: whatsapp_result,
-        whatsapp_campaign: whatsapp_camp_result,
-      };
+    const agent_count_query = `
+      SELECT 
+        COUNT(*) AS number_of_agents
+      FROM db_authkey.tbl_agents
+      WHERE user_id = ?
+    `;
+    const agent_count_result = await db(agent_count_query, [retr_user_id]);
+
+    const combinedData = {
+      sms: sms_results,
+      email: email_results,
+      voice: voice_result,
+      whatsapp_api: whatsapp_result,
+      whatsapp_campaign: whatsapp_camp_result,
+      agent_details: agent_results,
+      agent_count: agent_count_result[0]?.number_of_agents || 0,
+    };
 
       const isAllDataEmpty = Object.values(combinedData).every(
         (data) =>
