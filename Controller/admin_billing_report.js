@@ -58,7 +58,7 @@ router.all(
       const get_parent_userid = async (user_type, parent_id) => {
         const userCheckQuery = `
           SELECT id, user_type 
-          FROM db_test.tbl_users 
+          FROM db_authkey.tbl_users 
           WHERE id = ? AND user_type = ?
         `;
 
@@ -91,22 +91,22 @@ router.all(
         if (user_type === "admin") {
           query = `
             SELECT c.id
-            FROM db_test.tbl_users c
-            JOIN db_test.tbl_users p ON c.parent = p.id
+            FROM db_authkey.tbl_users c
+            JOIN db_authkey.tbl_users p ON c.parent = p.id
             WHERE c.user_type = 'client' AND (p.user_type = 'emp' OR c.parent = 1);
           `;
         } else if (user_type === "reseller") {
           query = `
             SELECT c.id
-            FROM db_test.tbl_users c
-            JOIN db_test.tbl_users p ON c.parent = p.id
+            FROM db_authkey.tbl_users c
+            JOIN db_authkey.tbl_users p ON c.parent = p.id
             WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'reseller';
           `;
         } else if (user_type === "emp") {
           query = `
             SELECT c.id
-            FROM db_test.tbl_users c
-            JOIN db_test.tbl_users p ON c.parent = p.id
+            FROM db_authkey.tbl_users c
+            JOIN db_authkey.tbl_users p ON c.parent = p.id
             WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'emp';
           `;
         } else {
@@ -120,7 +120,7 @@ router.all(
       };
          
       const validate_reseller_user=async (retr_user_id,uid)=>{
-        const validate_query=`select parent from db_test.tbl_users where id = ? `
+        const validate_query=`select parent from db_authkey.tbl_users where id = ? `
          
         const validate_result=await db(validate_query,[retr_user_id])
          
@@ -200,8 +200,8 @@ router.all(
       const smsQuery = `
           SELECT user_id, username,
           SUM(total) AS total_sms_summary
-          FROM db_test.tbl_sms_summary
-          JOIN db_test.tbl_users ON db_test.tbl_sms_summary.user_id = db_test.tbl_users.id
+          FROM db_authkey_reports.tbl_sms_summary
+          JOIN db_authkey.tbl_users ON db_authkey_reports.tbl_sms_summary.user_id = db_authkey.tbl_users.id
           WHERE date BETWEEN ? AND ?
           ${userFilter}
           GROUP BY user_id
@@ -222,9 +222,9 @@ router.all(
               u.username,
               SUM(ws.billable_count) + SUM(ws.nonbillable_count) AS total_whatsapp_summary
             FROM
-              db_test.tbl_users u
+              db_authkey.tbl_users u
             JOIN
-              db_test.tbl_whatsapp_summary ws ON u.id = ws.user_id
+              db_authkey_reports.tbl_whatsapp_summary ws ON u.id = ws.user_id
             WHERE
               ws.date BETWEEN ? AND ?
               ${userFilter}
@@ -238,9 +238,9 @@ router.all(
               u.username,
               COALESCE(SUM(wb.total_count), 0) AS total_billing_summary
             FROM
-              db_test.tbl_users u
+              db_authkey.tbl_users u
             LEFT JOIN
-              db_test.tbl_whatsapp_billing_summary wb ON u.id = wb.user_id
+             db_authkey_bulk.tbl_whatsapp_billing_summary wb ON u.id = wb.user_id
             WHERE
               wb.submission_date BETWEEN ? AND ?
               ${userFilter}
@@ -262,8 +262,8 @@ router.all(
       const voiceQuery = `
           SELECT user_id, username,
           SUM(total) AS total_voice_summary
-          FROM db_test.tbl_voice_summary
-          JOIN db_test.tbl_users ON db_test.tbl_voice_summary.user_id = db_test.tbl_users.id
+          FROM db_authkey_reports.tbl_voice_summary
+          JOIN  db_authkey.tbl_users ON db_authkey_reports.tbl_voice_summary.user_id = db_authkey.tbl_users.id
           WHERE date BETWEEN ? AND ?
           ${userFilter}
           GROUP BY user_id
@@ -273,8 +273,8 @@ router.all(
       const emailQuery = `
           SELECT user_id, username,
           SUM(delivered + clicked + bounced + sent + opened + submitted) AS total_email_summary
-          FROM db_test.tbl_email_summary
-          JOIN db_test.tbl_users ON db_test.tbl_email_summary.user_id = db_test.tbl_users.id
+          FROM db_authkey_reports.tbl_email_summary
+          JOIN db_authkey.tbl_users ON db_authkey_reports.tbl_email_summary.user_id = db_authkey.tbl_users.id
           WHERE date BETWEEN ? AND ?
           ${userFilter}
           GROUP BY user_id
