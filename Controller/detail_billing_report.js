@@ -98,6 +98,7 @@ WHERE
 
       const whatsapp_query = `
     SELECT 
+    message_type,
         SUM(delivered) AS total_delivered,
         SUM(failed) AS total_failed,
         SUM(sent) AS total_sent,
