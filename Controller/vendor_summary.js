@@ -47,8 +47,8 @@ router.all(
         where routeid = ? and channel='whatsapp'`;
 
       const route_user_result = await db(route_user_query, [routeid]);
-      console.log("number of ids", route_user_result.length);
-      console.log(route_user_result);
+    //   console.log("number of ids", route_user_result.length);
+    //   console.log(route_user_result);
 
       const userids = route_user_result.map((row) => row.userid);
 
@@ -93,6 +93,7 @@ GROUP BY DATE_FORMAT(submission_date, '%Y-%m-%d'), template_type;
         fromdate,
         todate,
       ]);
+
     //   console.log("whatsapp api,", whatsapp_billing_result.length);
 
     if(whatsapp_billing_result.length === 0){
