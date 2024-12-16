@@ -59,7 +59,7 @@ router.all(
         });
       }
       const placeholders = userids.map(() => "?").join(",");
-      const whatsapp_billing_query = `r
+      const whatsapp_billing_query = `
      SELECT 
   DATE_FORMAT(submission_date, '%Y-%m-%d') AS date,
   JSON_OBJECT(
