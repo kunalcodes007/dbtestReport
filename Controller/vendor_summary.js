@@ -158,12 +158,16 @@ GROUP BY DATE_FORMAT(submission_date, '%Y-%m-%d'), template_type;
         whatsapp_api_result.push({
             date: "No data",
             data: {
-              total_count: 0,
-              delivered_count: 0,
-              failed_count: 0,
-              other_count: 0,
-              template_type: null,
-              total_wp_price: 0,
+              total_sent: 0,
+              total_delivered: 0,
+              total_failed: 0,
+              total_read: 0,
+              total_submitted: null,
+              total_optout: 0,
+              total_billable_cost:0,
+              total_billable_count:0,
+              total_nonbillable_count:0,
+              total_nonbillable_cost:0
             },
           });
     }
