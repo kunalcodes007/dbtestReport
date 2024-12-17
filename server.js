@@ -14,6 +14,8 @@ const api_insert_data=require("./Controller/api_insert_data")
 const camp_quick_reply_download=require("./Controller/camp_quick_reply_download")
 
 const vendor_summary=require("./Controller/vendor_summary")
+const listKarix=require("./Controller/karixList")
+
 // const admin_billing_report=require("./Controller/admin_billing_report")
 app.use(express.json());
 app.use("/api", admin_billing_report);
@@ -26,6 +28,8 @@ app.use("/api",url_fixed_track)
 app.use("/api",api_insert_data)
 app.use("/api",camp_quick_reply_download)
 app.use("/api",vendor_summary)
+app.use("/api",listKarix)
+
 // app.use("/api",admin_billing_report)
 
 app.use(express.urlencoded({ extended: true }));
