@@ -1,20 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/databaseconnection");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const auth = require("../Middleware/auth");
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const {db} = require("../../config/databaseconnection");
+const adminAuth = require("../../middleware/adminAuth");
+
 
 router.all(
   "/listKarix",
-  auth,
+  adminAuth,
   catchAsyncErrors(async (req, res, next) => {
-    let resdata;
-    if (req.method === "GET") {
-      resdata = req.query;
-    }
-    if (req.method === "POST") {
-      resdata = req.body;
-    }
+   let resdata;
+      if (Object.keys(req.body).length > 0) {
+        resdata = req.body;
+      }
+      if (Object.keys(req.query).length > 0) {
+        resdata = req.query;
+      }
 
     if (resdata.method === "retrieve_karix_emb_signup") {
       const today = new Date().toISOString().split("T")[0];
@@ -133,13 +134,29 @@ router.all(
         fromdate,
         todate,
       ]);
-      const combineddata = {
+      const combineData = {
         karix_token_result,
         karix_waba_result,
       };
+       const isAllDataEmpty = Object.values(combineData).every(
+        (data) =>
+          !data ||
+          data.length === 0 ||
+          (Array.isArray(data) &&
+            data.every((row) =>
+              Object.values(row).every((val) => val === null)
+            ))
+      );
+
+      if (isAllDataEmpty) {
+        return res.status(404).json({
+          success: false,
+          message: "No records found ",
+        });
+      }
       return res.status(200).json({
         success: true,
-        data: combineddata,
+        data: combineData,
       });
     } else if (resdata.method === "filter_karix_emb_signup") {
       const today = new Date().toISOString().split("T")[0];
@@ -178,11 +195,27 @@ router.all(
           todate,
           status,
         ]);
-        const combineddata = {
+        const combineData = {
           token_result,
           waba_result,
         };
-        return res.status(200).json({ success: true, data: combineddata });
+        const isAllDataEmpty = Object.values(combineData).every(
+        (data) =>
+          !data ||
+          data.length === 0 ||
+          (Array.isArray(data) &&
+            data.every((row) =>
+              Object.values(row).every((val) => val === null)
+            ))
+      );
+
+      if (isAllDataEmpty) {
+        return res.status(404).json({
+          success: false,
+          message: "No records found ",
+        });
+      }
+        return res.status(200).json({ success: true, data: combineData });
       }
     } else {
       return res
