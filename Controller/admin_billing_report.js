@@ -5,7 +5,7 @@ const {db} = require("../../config/databaseconnection");
 const adminAuth = require("../../middleware/adminAuth");
 router.all(
   "/admin_summary_report",
-  auth,
+   adminAuth,
   catchAsyncErrors(async (req, res) => {
     let resdata;
       if (Object.keys(req.body).length > 0) {
