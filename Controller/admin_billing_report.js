@@ -8,13 +8,12 @@ router.all(
   auth,
   catchAsyncErrors(async (req, res) => {
     let resdata;
-    if (req.method === "GET") {
-      resdata = req.query;
-    }
-    if (req.method === "POST") {
-      resdata = req.body;
-    }
-
+      if (Object.keys(req.body).length > 0) {
+        resdata = req.body;
+      }
+      if (Object.keys(req.query).length > 0) {
+        resdata = req.query;
+      }
     if (resdata.method === "summary") {
       const { fromdate, todate, retr_user_id, user_type, uid } = resdata;
 
