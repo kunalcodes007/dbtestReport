@@ -6,7 +6,7 @@ const adminAuth = require("../../middleware/adminAuth");
 
 
 router.all(
-  "/listKarix",
+  "/karix_list",
   adminAuth,
   catchAsyncErrors(async (req, res, next) => {
    let resdata;
@@ -134,11 +134,11 @@ router.all(
         fromdate,
         todate,
       ]);
-      const combineData = {
+      const combinedData = {
         karix_token_result,
         karix_waba_result,
       };
-       const isAllDataEmpty = Object.values(combineData).every(
+       const isAllDataEmpty = Object.values(combinedData).every(
         (data) =>
           !data ||
           data.length === 0 ||
@@ -156,7 +156,7 @@ router.all(
       }
       return res.status(200).json({
         success: true,
-        data: combineData,
+        data: combinedData,
       });
     } else if (resdata.method === "filter_karix_emb_signup") {
       const today = new Date().toISOString().split("T")[0];
@@ -195,11 +195,11 @@ router.all(
           todate,
           status,
         ]);
-        const combineData = {
+        const combinedData = {
           token_result,
           waba_result,
         };
-        const isAllDataEmpty = Object.values(combineData).every(
+        const isAllDataEmpty = Object.values(combinedData).every(
         (data) =>
           !data ||
           data.length === 0 ||
@@ -215,7 +215,7 @@ router.all(
           message: "No records found ",
         });
       }
-        return res.status(200).json({ success: true, data: combineData });
+        return res.status(200).json({ success: true, data: combinedData });
       }
     } else {
       return res
