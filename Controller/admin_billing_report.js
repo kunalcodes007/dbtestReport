@@ -1,9 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/databaseconnection");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const auth = require("../Middleware/auth");
-
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const {db} = require("../../config/databaseconnection");
+const adminAuth = require("../../middleware/adminAuth");
 router.all(
   "/admin_summary_report",
   auth,
@@ -96,12 +95,19 @@ router.all(
             WHERE c.user_type = 'client' AND (p.user_type = 'emp' OR c.parent = 1);
           `;
         } else if (user_type === "reseller") {
+          // query = `
+          //   SELECT c.id
+          //   FROM db_authkey.tbl_users c
+          //   JOIN db_authkey.tbl_users p ON c.parent = p.id
+          //   WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'reseller';
+          // `;
           query = `
-            SELECT c.id
-            FROM db_authkey.tbl_users c
-            JOIN db_authkey.tbl_users p ON c.parent = p.id
-            WHERE c.user_type = 'client' AND p.id = ? AND p.user_type = 'reseller';
-          `;
+
+          SELECT c.id
+          FROM db_authkey.tbl_users c
+          JOIN db_authkey.tbl_users p ON c.parent = p.id
+          WHERE c.user_type = 'client' AND (p.id = ? AND p.user_type = 'reseller');
+        `;
         } else if (user_type === "emp") {
           query = `
             SELECT c.id
@@ -123,11 +129,12 @@ router.all(
         const validate_query=`select parent from db_authkey.tbl_users where id = ? `
          
         const validate_result=await db(validate_query,[retr_user_id])
-         
-        if(validate_result[0].parent !== uid ){
+         const UID=Number(uid)
+        if(validate_result[0].parent !== UID ){
            return res.status(400).json({success:false,message:"no record found"})
         }
       }
+      
       let userFilter = "";
       let userParams = [fromdate, todate];
       if (retr_user_id === "all") {
@@ -141,8 +148,8 @@ router.all(
             userParams = [...userParams, ...parentIds];
           } else {
             return res.status(200).json({
-              success: true,
-              data: [],
+              success: false,
+              data: "no record found",
             });
           }
         } else if (user_type === "emp") {
@@ -154,8 +161,8 @@ router.all(
             userParams = [...userParams, ...parentIds];
           } else {
             return res.status(200).json({
-              success: true,
-              data: [],
+              success: false,
+              data: "no record found",
             });
           }
         } else if (user_type === "reseller") {
@@ -207,50 +214,95 @@ router.all(
           GROUP BY user_id
         `;
       const smsResults = await db(smsQuery, userParams);
+console.log("sms params:",userParams)
+console.log("sms result:",smsResults)
 
       const whatsappBillingQuery = `
-        SELECT 
-          q1.user_id,
-          q1.username,
-          COALESCE(q1.total_whatsapp_summary, 0) AS total_whatsapp_summary,
-          COALESCE(q2.total_billing_summary, 0) AS total_billing_summary,
-          COALESCE(q1.total_whatsapp_summary, 0) + COALESCE(q2.total_billing_summary, 0) AS grand_total_summary
-        FROM 
-          (
-            SELECT
-              ws.user_id,
-              u.username,
-              SUM(ws.billable_count) + SUM(ws.nonbillable_count) AS total_whatsapp_summary
-            FROM
-              db_authkey.tbl_users u
-            JOIN
-              db_authkey_reports.tbl_whatsapp_summary ws ON u.id = ws.user_id
-            WHERE
-              ws.date BETWEEN ? AND ?
-              ${userFilter}
-            GROUP BY
-              ws.user_id, u.username
-          ) q1
-        LEFT JOIN 
-          (
-            SELECT
-              wb.user_id,
-              u.username,
-              COALESCE(SUM(wb.total_count), 0) AS total_billing_summary
-            FROM
-              db_authkey.tbl_users u
-            LEFT JOIN
-             db_authkey_bulk.tbl_whatsapp_billing_summary wb ON u.id = wb.user_id
-            WHERE
-              wb.submission_date BETWEEN ? AND ?
-              ${userFilter}
-            GROUP BY
-              wb.user_id, u.username
-          ) q2
-        ON q1.user_id = q2.user_id;
+       SELECT 
+    COALESCE(q1.user_id, q2.user_id) AS user_id,
+    COALESCE(q1.username, q2.username) AS username,
+    COALESCE(q1.total_whatsapp_summary, 0) AS total_whatsapp_summary,
+    COALESCE(q2.total_billing_summary, 0) AS total_billing_summary,
+    COALESCE(q1.total_whatsapp_summary, 0) + COALESCE(q2.total_billing_summary, 0) AS grand_total_summary
+FROM 
+    (
+        SELECT
+            ws.user_id,
+            u.username,
+            SUM(ws.billable_count) + SUM(ws.nonbillable_count) AS total_whatsapp_summary
+        FROM
+            db_authkey.tbl_users u
+        JOIN
+            db_authkey_reports.tbl_whatsapp_summary ws ON u.id = ws.user_id
+        WHERE
+            ws.date BETWEEN ? AND ?
+            ${userFilter}
+        GROUP BY
+            ws.user_id, u.username
+    ) q1
+LEFT JOIN 
+    (
+        SELECT
+            wb.user_id,
+            u.username,
+            SUM(wb.total_count) AS total_billing_summary
+        FROM
+            db_authkey.tbl_users u
+        LEFT JOIN
+            db_authkey_bulk.tbl_whatsapp_billing_summary wb ON u.id = wb.user_id
+        WHERE
+            wb.submission_date BETWEEN ? AND ?
+                ${userFilter}
+        GROUP BY
+            wb.user_id, u.username
+    ) q2
+ON q1.user_id = q2.user_id
+
+UNION
+
+SELECT 
+    COALESCE(q1.user_id, q2.user_id) AS user_id,
+    COALESCE(q1.username, q2.username) AS username,
+    COALESCE(q1.total_whatsapp_summary, 0) AS total_whatsapp_summary,
+    COALESCE(q2.total_billing_summary, 0) AS total_billing_summary,
+    COALESCE(q1.total_whatsapp_summary, 0) + COALESCE(q2.total_billing_summary, 0) AS grand_total_summary
+FROM 
+    (
+        SELECT
+            ws.user_id,
+            u.username,
+            SUM(ws.billable_count) + SUM(ws.nonbillable_count) AS total_whatsapp_summary
+        FROM
+            db_authkey.tbl_users u
+        JOIN
+            db_authkey_reports.tbl_whatsapp_summary ws ON u.id = ws.user_id
+        WHERE
+            ws.date BETWEEN ? AND ?
+                ${userFilter}
+        GROUP BY
+            ws.user_id, u.username
+    ) q1
+RIGHT JOIN 
+    (
+        SELECT
+            wb.user_id,
+            u.username,
+            SUM(wb.total_count) AS total_billing_summary
+        FROM
+            db_authkey.tbl_users u
+        LEFT JOIN
+            db_authkey_bulk.tbl_whatsapp_billing_summary wb ON u.id = wb.user_id
+        WHERE
+            wb.submission_date BETWEEN ? AND ?
+           ${userFilter}
+        GROUP BY
+            wb.user_id, u.username
+    ) q2
+ON q1.user_id = q2.user_id;
+
       `;
 
-      const whatsappBillingParams = [...userParams, ...userParams];
+      const whatsappBillingParams = [...userParams,...userParams,...userParams, ...userParams];
       // console.log("WhatsApp Query:", whatsappBillingQuery);
       // console.log("WhatsApp Params:", whatsappBillingParams);
 
@@ -258,7 +310,7 @@ router.all(
         whatsappBillingQuery,
         whatsappBillingParams
       );
-
+        
       const voiceQuery = `
           SELECT user_id, username,
           SUM(total) AS total_voice_summary
@@ -300,7 +352,7 @@ router.all(
           );
         });
       };
-
+      
       addData(smsResults, "total_sms_summary");
       addData(whatsappBillingResults, "grand_total_summary");
       addData(voiceResults, "total_voice_summary");
@@ -312,10 +364,42 @@ router.all(
         success: true,
         data: finalData,
       });
-    } else {
+    } 
+      
+     else if (resdata.method === "retrieve_wp_billing_summary") {
+      let db_query, db_params;
+      if (resdata.search_user_id) {
+        db_query =
+          "SELECT a.*,b.email FROM db_authkey_bulk.tbl_whatsapp_billing_summary a,tbl_users b WHERE a.user_id=b.id and a.submission_date>= ? AND a.submission_date<=? AND a.user_id=?";
+        db_params = [
+          resdata.from_date,
+          resdata.to_date,
+          resdata.search_user_id,
+        ];
+      } else {
+        db_query =
+          "SELECT a.*,b.email FROM db_authkey_bulk.tbl_whatsapp_billing_summary a,tbl_users b WHERE a.user_id=b.id and a.submission_date>= ? AND a.submission_date<=?";
+        db_params = [resdata.from_date, resdata.to_date];
+      }
+      const dbdata = await db(db_query, db_params);
+      if (dbdata.length > 0) {
+        res.status(200).json({
+          success: true,
+          data: dbdata,
+        });
+      } else {
+        res.status(200).json({
+          success: false,
+          message: "data not found",
+        });
+      }
+      return;
+    }
+    else {
       res.status(400).json({ success: false, message: "Invalid method" });
     }
   })
 );
 
 module.exports = router;
+
