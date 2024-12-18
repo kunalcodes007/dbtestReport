@@ -4,7 +4,7 @@ const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const {db} = require("../../config/databaseconnection");
 const adminAuth = require("../../middleware/adminAuth");
 router.all(
-  "/admin_summary_report",
+  "/billing_summary",
    adminAuth,
   catchAsyncErrors(async (req, res) => {
     let resdata;
