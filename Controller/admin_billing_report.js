@@ -213,8 +213,7 @@ router.all(
           GROUP BY user_id
         `;
       const smsResults = await db(smsQuery, userParams);
-console.log("sms params:",userParams)
-console.log("sms result:",smsResults)
+
 
       const whatsappBillingQuery = `
        SELECT 
@@ -302,8 +301,7 @@ ON q1.user_id = q2.user_id;
       `;
 
       const whatsappBillingParams = [...userParams,...userParams,...userParams, ...userParams];
-      // console.log("WhatsApp Query:", whatsappBillingQuery);
-      // console.log("WhatsApp Params:", whatsappBillingParams);
+     
 
       const whatsappBillingResults = await db(
         whatsappBillingQuery,
