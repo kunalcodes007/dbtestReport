@@ -1,20 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/databaseconnection");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const auth = require("../Middleware/auth");
+const {db} = require("../../config/databaseconnection");
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const adminAuth = require("../../middleware/adminAuth");
 
 router.all(
-  "/detail_billing_report",
-  auth,
+  "/billing_report",
+  adminAuth,
   catchAsyncErrors(async (req, res, next) => {
     let resdata;
-    if (req.method === "GET") {
-      resdata = req.query;
-    }
-    if (req.method === "POST") {
-      resdata = req.body;
-    }
+      if (Object.keys(req.body).length > 0) {
+        resdata = req.body;
+      }
+      if (Object.keys(req.query).length > 0) {
+        resdata = req.query;
+      }
 
     if (resdata.method === "detailReport") {
       const { retr_user_id, fromDate, toDate } = req.body;
@@ -74,9 +74,9 @@ WHERE
         fromDate,
         toDate,
       ]);
-      
+            
       // console.log("email", email_results);
-
+                                                    
       const voice_query = `SELECT 
     SUM(success) AS total_success,
     SUM(failed) AS total_failed,
@@ -95,7 +95,10 @@ WHERE
         toDate,
       ]);
       // console.log("voice", voice_result);
-
+const voice_cost_query=`select sum(voice_cost) as voice_cost from db_authkey.tbl_user_pricelist where user_id = ? and created >= ? and created <= ? `
+const voice_cost_result=await db(voice_cost_query,[  retr_user_id,
+  fromDate,
+  toDate,])
       const whatsapp_query = `
     SELECT 
     message_type,
@@ -171,6 +174,7 @@ GROUP BY
       sms: sms_results,
       email: email_results,
       voice: voice_result,
+      voice_cost:voice_cost_result,
       whatsapp_api: whatsapp_result,
       whatsapp_campaign: whatsapp_camp_result,
       agent_details: agent_results,
