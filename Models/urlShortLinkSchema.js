@@ -16,8 +16,8 @@ const urlShortLinkSchema = new mongoose.Schema(
     submit_via: { type: String, required: true },
     country_code: { type: String, required: true },
     created: {
-      type: Date,
-      default: () => new Date().toISOString().slice(0, 19).replace("T", " "),
+      type: String,
+      // default: () => new Date().toISOString().slice(0, 19).replace("T", " "),
     }},
   { collection: "url_short_link_withtrack_whatsapp" } 
 );
