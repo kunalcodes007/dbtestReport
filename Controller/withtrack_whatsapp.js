@@ -3,16 +3,15 @@ const router = express.Router();
 const auth = require("../Middleware/mongoAuth"); 
 const urlShortLinkModel = require("../Models/urlShortLinkSchema"); 
 
-router.all("/api_click_report", auth, async (req, res) => {
+router.all("/api_click_report",auth, async (req, res) => {
 
    let resdata;
-    if (req.method === "GET") {
-      resdata = req.query;
-    }
-
-    if (req.method === "POST") {
-      resdata = req.body;
-    }
+      if (Object.keys(req.body).length > 0) {
+        resdata = req.body;
+      }
+      if (Object.keys(req.query).length > 0) {
+        resdata = req.query;
+      }
    
     if(resdata.method === "insert_api_wpbtnclick"){
 
@@ -42,14 +41,70 @@ router.all("/api_click_report", auth, async (req, res) => {
           !urlkey ||
           !camp_id ||
           !submit_via ||
-          !country_code
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: "All fields are mandatory",
-          });
-        }
-    
+          !country_code ||
+          !created
+        )
+           if(!phone_number){
+            return res.status(400).json({
+              success: false,
+              message: "phone_number is mandatory",
+            });
+           }
+           if(!user_id){
+            return res.status(400).json({
+              success: false,
+              message: "user_id is mandatory",
+            });
+           }
+           if(!sender){
+            return res.status(400).json({
+              success: false,
+              message: "sender is mandatory",
+            });
+           }
+           if(!main_url){
+            return res.status(400).json({
+              success: false,
+              message: "main_url is mandatory",
+            });
+           }
+           if(!short_url){
+            return res.status(400).json({
+              success: false,
+              message: "short_url is mandatory",
+            });
+           }
+           if(!urlkey){
+            return res.status(400).json({
+              success: false,
+              message: "urlkey is mandatory",
+            });
+           }
+           if(!camp_id){
+            return res.status(400).json({
+              success: false,
+              message: "camp_id is mandatory",
+            });
+           }
+           if(!submit_via){
+            return res.status(400).json({
+              success: false,
+              message: "submit_via is mandatory",
+            });
+           }
+           if(!country_code){
+            return res.status(400).json({
+              success: false,
+              message: "country_code is mandatory",
+            });
+           }
+           if(!created){
+            return res.status(400).json({
+              success: false,
+              message: "created is mandatory",
+            });
+           }
+       
         const urlData = new urlShortLinkModel({
           phone_number,
           user_id,
@@ -57,7 +112,6 @@ router.all("/api_click_report", auth, async (req, res) => {
           main_url,
           short_url,
           urlkey,
-          created:  new Date(), 
           ip: ip || null,
           url_clickcount: url_clickcount || 0,
           url_city: url_city || null,
@@ -65,6 +119,7 @@ router.all("/api_click_report", auth, async (req, res) => {
           camp_id,
           submit_via,
           country_code,
+          created
         });
     
         const savedData = await urlData.save();
@@ -77,7 +132,6 @@ router.all("/api_click_report", auth, async (req, res) => {
     } else{
         res.status(400).json({success:false,message:"invalid method"})
     }
-
 });
 
 module.exports = router;
