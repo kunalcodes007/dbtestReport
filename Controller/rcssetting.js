@@ -209,7 +209,7 @@ router.all(
         const check_parent_result = await db(check_parent_query, [retr_user_id]);
         // console.log("parent", check_parent_result)
         if (check_parent_result[0].parent != user_id) {
-          return res.status(400).json({ success: false, message: `Invalid user_id` })
+          return res.status(400).json({ success: false, message: `Invalid retr_user_id` })
         }
         const check_reseller_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
         const check_reseller_result = await db(check_reseller_query, [user_id]);
