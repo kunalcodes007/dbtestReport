@@ -6,6 +6,8 @@ const Auth = require("../../middleware/auth");
 const tbl_rcs_price = require("../../model/rcsPrice");
 const rcs_master_price = require("../../model/rcsMaster");
 const todayDateTime = require("../../utils/todayDateTime");
+const {db} = require("../../config/databaseconnection");
+
 router.all(
   "/rcs_setting",
   Auth,
