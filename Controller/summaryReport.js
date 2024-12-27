@@ -3,8 +3,8 @@ const router = express.Router();
 const { db } = require("../../config/databaseconnection");
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const adminAuth = require("../../middleware/adminAuth");
-const campquickreplySchema = require("../Models/campquickreplySchema")
-const urlShortLinkSchema=require("../Models/urlShortLinkSchema")
+const campquickreplySchema = require("../../model/campquickreplySchema")
+const urlShortLinkSchema=require("../../model/urlShortLinkSchema")
 
 //created by kunal
 router.all(
