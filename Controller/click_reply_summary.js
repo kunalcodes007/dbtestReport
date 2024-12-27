@@ -3,7 +3,7 @@ const router = express.Router();
 const ErrorHandler = require("../../utils/ErrorHandler");
 const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
 const adminAuth = require("../../middleware/adminAuth");
-const campquickreplySchema = require("../Models/campquickreplySchema")
+const campquickreplySchema = require("../../Models/campquickreplySchema")
 
 router.all("/click_reply_summary", adminAuth, catchAsyncErrors(async (req, res, next) => {
 
