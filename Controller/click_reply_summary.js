@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const auth = require("../Middleware/auth");
+const ErrorHandler = require("../../utils/ErrorHandler");
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const adminAuth = require("../../middleware/adminAuth");
 const campquickreplySchema = require("../Models/campquickreplySchema")
 
-router.all("/click_reply_summary", auth, catchAsyncErrors(async (req, res, next) => {
+router.all("/click_reply_summary", adminAuth, catchAsyncErrors(async (req, res, next) => {
 
     let resdata;
     if (Object.keys(req.body).length > 0) {
