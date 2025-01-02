@@ -1,16 +1,12 @@
 const mongoose = require("mongoose");
 require("dotenv").config({ path: "./config/.env" });
-const connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI_AUTHKEY_RCS;
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-    process.exit(1);
-  }
-};
-module.exports = connectDB;
+
+
+const mongodb_authkey_0kb=mongoose.createConnection(
+  process.env.MONGODB_URI_AUTHKEY_RCS
+)
+const mongodb_authkey_bulk = mongoose.createConnection(
+  process.env.MONGODB_URI_AUTHKEY_BULK
+);
+
+module.exports = {  mongodb_authkey_bulk,mongodb_authkey_0kb };
