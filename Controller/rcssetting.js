@@ -765,7 +765,208 @@ router.all(
         });
       }
 
-    } else {
+    }else if (resdata.method === "update_rcsprice") {
+      const { user_id, country_code, basic_sms_cost, p2a_conv_cost, a2p_conv_cost, a2p_single_sms_cost, parent_type, client_type } = resdata;
+      const {retr_user_id}=resdata;
+      if (!retr_user_id) {
+        return res.status(400).json({ success: false, message: "retr_user_id is required" })
+      }
+      if (!user_id) {
+        return res.status(400).json({ success: false, message: "user_id is required" })
+      }
+      if (!country_code) {
+        return res.status(400).json({ success: false, message: "country_code is required" })
+      }
+      if ((parent_type == "admin" && client_type == "client") || (parent_type == "admin" && client_type == "reseller") || (parent_type == "reseller" && client_type == "client")) {
+
+        const check_parent_query = `select parent from db_authkey.tbl_users where id = ?`
+
+        const check_parent_result = await db(check_parent_query, [retr_user_id]);
+        // console.log("parent", check_parent_result)
+        if (check_parent_result[0].parent != user_id) {
+          return res.status(400).json({ success: false, message: ` user_id is not a parent of retr_user_id` })
+        }
+        const check_reseller_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
+        const check_reseller_result = await db(check_reseller_query, [user_id]);
+
+        // console.log("Result:", check_reseller_result);
+
+        if (!check_reseller_result || check_reseller_result.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "No user found with the provided user_id",
+          });
+        }
+
+        if (check_reseller_result[0].user_type != 'reseller' && check_reseller_result[0].user_type != 'admin') {
+          return res.status(400).json({
+            success: false,
+            message: "The provided user_id is not of type 'admin' or 'reseller' ",
+          });
+        }
+
+
+        const check_reseller_client_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
+        const check_reseller_client_result = await db(check_reseller_client_query, [retr_user_id]);
+
+        // console.log("Result:", check_reseller_result);
+
+        if (!check_reseller_client_result || check_reseller_client_result.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "No user found with the provided retr_user_id",
+          });
+        }
+
+        if (check_reseller_client_result[0].user_type != 'client' && check_reseller_client_result[0].user_type != 'reseller') {
+          return res.status(400).json({
+            success: false,
+            message: "The provided retr_user_id is not of type 'client' or 'reseller' ",
+          });
+        }
+      
+        const updateQuery = await tbl_rcs_price.findOne({ user_id: retr_user_id, country_code: country_code });
+        if (updateQuery) {
+  
+          if (basic_sms_cost !== undefined) {
+            updateQuery.basic_sms_cost = basic_sms_cost;
+          }
+          if (p2a_conv_cost !== undefined) {
+            updateQuery.p2a_conv_cost = p2a_conv_cost;
+          }
+          if (a2p_conv_cost !== undefined) {
+            updateQuery.a2p_conv_cost = a2p_conv_cost;
+          }
+          if (a2p_single_sms_cost !== undefined) {
+            updateQuery.a2p_single_sms_cost = a2p_single_sms_cost;
+          }
+          updateQuery.updated_date = todayDateTime();
+          await updateQuery.save();
+  
+          return res.status(200).json({ success: true, message: "pricing updated successfully" })
+        }
+  
+      }else if(parent_type == "reseller" && client_type == "reseller"){
+        const check_parent_query = `select parent from db_authkey.tbl_users where id = ?`
+
+        const check_parent_result = await db(check_parent_query, [retr_user_id]);
+        // console.log("parent", check_parent_result)
+        if (check_parent_result[0].parent != user_id) {
+          return res.status(400).json({ success: false, message: ` user_id is not a parent of retr_user_id` })
+        }
+        const check_reseller_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
+        const check_reseller_result = await db(check_reseller_query, [user_id]);
+
+        // console.log("Result:", check_reseller_result);
+
+        if (!check_reseller_result || check_reseller_result.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "No user found with the provided user_id",
+          });
+        }
+
+        if (check_reseller_result[0].user_type != 'reseller' ) {
+          return res.status(400).json({
+            success: false,
+            message: "The provided user_id is not of type 'reseller' ",
+          });
+        }
+
+        const check_reseller_client_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
+        const check_reseller_client_result = await db(check_reseller_client_query, [retr_user_id]);
+
+        // console.log("Result:", check_reseller_result);
+
+        if (!check_reseller_client_result || check_reseller_client_result.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "No user found with the provided retr_user_id",
+          });
+        }
+
+        if (check_reseller_client_result[0].user_type != 'reseller') {
+          return res.status(400).json({
+            success: false,
+            message: "The provided retr_user_id is not of type 'reseller' ",
+          });
+        }
+        const check_parent_costs = await tbl_rcs_price.findOne({ user_id: user_id, country_code: country_code });
+
+        if (!check_parent_costs) {
+            return res.status(404).json({
+                success: false,
+                message: "Parent's costs not found in tbl_rcs_price collection",
+            });
+        }
+    
+        const parent_sms_cost = check_parent_costs.sms_cost;
+        const parent_voice_cost = check_parent_costs.voice_cost;
+        const parent_a2p_conv_cost = check_parent_costs.a2p_conv_cost;
+        const parent_p2a_conv_cost = check_parent_costs.p2a_conv_cost;
+    
+        const check_child_costs = await tbl_rcs_price.findOne({ user_id: retr_user_id, country_code: country_code });
+    
+        if (!check_child_costs) {
+            return res.status(404).json({
+                success: false,
+                message: "Child's costs not found in tbl_rcs_price collection",
+            });
+        }
+    
+        const child_sms_cost = check_child_costs.sms_cost;
+        const child_voice_cost = check_child_costs.voice_cost;
+        const child_a2p_conv_cost = check_child_costs.a2p_conv_cost;
+        const child_p2a_conv_cost = check_child_costs.p2a_conv_cost;
+    
+        if (
+            (basic_sms_cost && basic_sms_cost > parent_sms_cost) ||
+            (p2a_conv_cost && p2a_conv_cost > parent_p2a_conv_cost) ||
+            (a2p_conv_cost && a2p_conv_cost > parent_a2p_conv_cost) ||
+            (a2p_single_sms_cost && a2p_single_sms_cost > parent_a2p_conv_cost)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Child's cost cannot be greater than the parent's cost",
+            });
+        }
+    
+        const update_child_costs = {};
+    
+        if (basic_sms_cost !== undefined) {
+            update_child_costs.sms_cost = basic_sms_cost;
+        }
+        if (p2a_conv_cost !== undefined) {
+            update_child_costs.p2a_conv_cost = p2a_conv_cost;
+        }
+        if (a2p_conv_cost !== undefined) {
+            update_child_costs.a2p_conv_cost = a2p_conv_cost;
+        }
+        if (a2p_single_sms_cost !== undefined) {
+            update_child_costs.a2p_single_sms_cost = a2p_single_sms_cost;
+        }
+    
+        update_child_costs.updated_date = todayDateTime();
+    
+        const updateResult = await tbl_rcs_price.updateOne(
+            { user_id: retr_user_id, country_code: country_code },
+            { $set: update_child_costs }
+        );
+    
+        if (updateResult.modifiedCount > 0) {
+            return res.status(200).json({
+                success: true,
+                message: " costs updated successfully",
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: "Failed to update costs",
+            });
+        }
+      }
+
+    }else {
       return res
         .status(400)
         .json({ success: false, message: "Invalid Method" });
