@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { mongodb_authkey_rcs } = require("../config/mongoconnection");
+const { mongodb_authkey_0kb } = require("../config/mongoconnection");
 const todayDateTime = require("../Utils/todayDateTime");
 const rcsPriceSchema = new mongoose.Schema({
   user_id: {
@@ -49,6 +49,6 @@ const rcsPriceSchema = new mongoose.Schema({
   },
 });
 
-const rcsPriceList = mongodb_authkey_rcs.model("user_rcs_pricelist", rcsPriceSchema,'user_rcs_pricelist');
+const rcsPriceList = mongodb_authkey_0kb.model("user_rcs_pricelist", rcsPriceSchema,'user_rcs_pricelist');
 
 module.exports = rcsPriceList;
