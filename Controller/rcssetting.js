@@ -7,6 +7,7 @@ const tbl_rcs_price = require("../../model/rcsPrice");
 const rcs_master_price = require("../../model/rcsMaster");
 const todayDateTime = require("../../utils/todayDateTime");
 const {db} = require("../../config/databaseconnection");
+const HistorySchema = require("../Models/price_update_history_all");
 
 router.all(
   "/rcs_setting",
