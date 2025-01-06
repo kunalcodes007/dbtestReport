@@ -44,10 +44,7 @@ const historySchema = new mongoose.Schema({
   voice_cost:{
   type:Number
   },
-  updated_date: {
-    type: String,
-    default: todayDateTime(),
-  },
+
   created_date: {
     type: String,
     default: todayDateTime(),
