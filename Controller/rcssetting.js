@@ -88,7 +88,6 @@ router.all(
           existingUserPrice.p2a_conv_cost += margin;
           existingUserPrice.a2p_conv_cost += margin;
           existingUserPrice.a2p_single_sms_cost += margin;
-          existingUserPrice.updated_date = todayDateTime();
 
           await existingUserPrice.save();
           await HistorySchema.create({
@@ -299,17 +298,16 @@ router.all(
         //   a2p_single_sms_cost: existingUserPrice.a2p_single_sms_cost + margin,
         // };
         if (existingUserPrice) {
-          existingUserPrice.basic_sms_cost += margin;
-          existingUserPrice.p2a_conv_cost += margin;
-          existingUserPrice.a2p_conv_cost += margin;
-          existingUserPrice.a2p_single_sms_cost += margin;
-          existingUserPrice.updated_date = todayDateTime();
+          // existingUserPrice.basic_sms_cost += margin;
+          // existingUserPrice.p2a_conv_cost += margin;
+          // existingUserPrice.a2p_conv_cost += margin;
+          // existingUserPrice.a2p_single_sms_cost += margin;
+          // existingUserPrice.updated_date = todayDateTime();
 
           const existingRetrUserPrice = await tbl_rcs_price.findOne({
             user_id: retr_user_id,
             country_code: country_code,
           });
-
           if (existingRetrUserPrice) {
             existingRetrUserPrice.basic_sms_cost += margin;
             existingRetrUserPrice.p2a_conv_cost += margin;
@@ -337,10 +335,10 @@ router.all(
             const newPriceData = {
               user_id: retr_user_id,
               country_code: country_code,
-              basic_sms_cost: existingUserPrice.basic_sms_cost,
-              p2a_conv_cost: existingUserPrice.p2a_conv_cost,
-              a2p_conv_cost: existingUserPrice.a2p_conv_cost,
-              a2p_single_sms_cost: existingUserPrice.a2p_single_sms_cost,
+              basic_sms_cost:  margin,
+              p2a_conv_cost:  margin,
+              a2p_conv_cost:  margin,
+              a2p_single_sms_cost:  margin,
               is_active: 1,
               bot_id: bot_id,
               is_frozen: 0,
@@ -351,22 +349,22 @@ router.all(
             await HistorySchema.create({
               user_id: retr_user_id,
               country_code: country_code,
-              basic_sms_cost: existingUserPrice.basic_sms_cost,
-              p2a_conv_cost: existingUserPrice.p2a_conv_cost,
-              a2p_conv_cost: existingUserPrice.a2p_conv_cost,
-              a2p_single_sms_cost: existingUserPrice.a2p_single_sms_cost,
+              basic_sms_cost: margin,
+              p2a_conv_cost: margin,
+              a2p_conv_cost: margin,
+              a2p_single_sms_cost: margin,
               channel: "rcs",
-              action: "update",
+              action: "Insert",
               created_date: todayDateTime(),
             });
             return res.status(200).json({
               success: true,
-              message: "Pricing updated successfully for single country (existing entry)",
+              message: "Pricing updated successfully for single country (new entry)",
             });
           }
         }
         else {
-          return res.status(404).json({ success: false, message: "Country code not found in tbl price list" });
+          return res.status(404).json({ success: false, message: "entry for provided Country code not found " });
         }
       } else if (parent_type === 'reseller' && client_type === 'reseller') {
         if (margin < 0) {
@@ -893,7 +891,7 @@ router.all(
       }
 
     } //method :: single_country_pricercs
-    else if (resdata.method === "single_country_pricercs") {
+    else if (resdata.method === "add_single_country_price_smsvoicewp") {
       const { margin, country_code, parent_type, client_type, user_id } = resdata;
 
       if (!margin) {
@@ -1407,7 +1405,7 @@ router.all(
         }
       }
     } //method :: bulk_country_pricercs
-    else if (resdata.method === "bulk_country_pricercs") {
+    else if (resdata.method === "add_all_country_price_smsvoicewp") {
       const { margin, country_code, parent_type, client_type, user_id } = resdata;
 
       if (!margin) {
@@ -1968,183 +1966,7 @@ WHERE (routeid = CASE
         }
       }
 
-    } else if (resdata.method === "update_user_rcs_price") {
-      const { user_id, sms_cost, voice_cost, parent_type, client_type, retr_user_id, country_code } = resdata
-      if (!user_id) {
-        return res.status(400).json({ success: false, message: "user_id is required" })
-      }
-      if (!retr_user_id) {
-        return res.status(400).json({ success: false, message: "retr_user_id is required" })
-      }
-      //  if(!sms_cost){
-      //   return res.status(400).json({success:false,message:"sms_cost is required"})
-      //  }
-      //  if(!voice_cost){
-      //   return res.status(400).json({success:false,message:"voice_cost"})
-      //  }
-
-      if ((parent_type == "admin" && client_type == "client") || (parent_type == "admin" && client_type == "reseller") || (parent_type == "reseller" && client_type == "client")) {
-        const check_parent_query = `select parent from db_authkey.tbl_users where id = ?`
-
-        const check_parent_result = await db(check_parent_query, [retr_user_id]);
-        // console.log("parent", check_parent_result)
-        if (check_parent_result[0].parent != user_id) {
-          return res.status(400).json({ success: false, message: ` user_id is not a parent of retr_user_id` })
-        }
-        const check_reseller_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
-        const check_reseller_result = await db(check_reseller_query, [user_id]);
-
-        // console.log("Result:", check_reseller_result);
-
-        if (!check_reseller_result || check_reseller_result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: "No user found with the provided user_id",
-          });
-        }
-
-        if (check_reseller_result[0].user_type != 'reseller' && check_reseller_result[0].user_type != 'admin') {
-          return res.status(400).json({
-            success: false,
-            message: "The provided user_id is not of type 'admin' or 'reseller' ",
-          });
-        }
-
-
-        const check_reseller_client_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
-        const check_reseller_client_result = await db(check_reseller_client_query, [retr_user_id]);
-
-        // console.log("Result:", check_reseller_result);
-
-        if (!check_reseller_client_result || check_reseller_client_result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: "No user found with the provided retr_user_id",
-          });
-        }
-
-        if (check_reseller_client_result[0].user_type != 'client' && check_reseller_client_result[0].user_type != 'reseller') {
-          return res.status(400).json({
-            success: false,
-            message: "The provided retr_user_id is not of type 'client' or 'reseller' ",
-          });
-        }
-
-        const sqlUpdateQuery = `
-      UPDATE db_authkey.tbl_user_pricelist_copy
-      SET 
-        sms_cost = CASE WHEN ? IS NOT NULL THEN ? ELSE sms_cost END,
-        voice_cost = CASE WHEN ? IS NOT NULL THEN ? ELSE voice_cost END
-      WHERE user_id = ? AND country_code = ?;
-    `;
-        const sql_query_result = await db(sqlUpdateQuery, [
-          sms_cost || null, sms_cost || null,
-          voice_cost || null, voice_cost || null,
-          retr_user_id, country_code
-        ])
-        console.log(sql_query_result)
-        if (sql_query_result) {
-          await HistorySchema.create({
-            user_id: retr_user_id,
-            country_code: country_code,
-            sms_cost: sms_cost || null,
-            voice_cost: voice_cost || null,
-            channel: "sms , voice",
-            action: "update",
-            created_date: todayDateTime(),
-          });
-          return res.status(200).json({ success: true, message: "pricing updated successfully" })
-        }
-
-      } else if (parent_type == "reseller" && client_type == "reseller") {
-        const check_parent_query = `select parent from db_authkey.tbl_users where id = ?`
-
-        const check_parent_result = await db(check_parent_query, [retr_user_id]);
-        if (check_parent_result[0].parent != user_id) {
-          return res.status(400).json({ success: false, message: ` user_id is not a parent of retr_user_id` })
-        }
-        const check_reseller_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
-        const check_reseller_result = await db(check_reseller_query, [user_id]);
-
-        if (!check_reseller_result || check_reseller_result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: "No user found with the provided user_id",
-          });
-        }
-
-        if (check_reseller_result[0].user_type != 'reseller') {
-          return res.status(400).json({
-            success: false,
-            message: "The provided user_id is not of type 'reseller' ",
-          });
-        }
-        const check_reseller_client_query = `SELECT user_type FROM db_authkey.tbl_users WHERE id = ?`;
-        const check_reseller_client_result = await db(check_reseller_client_query, [retr_user_id]);
-
-
-        if (!check_reseller_client_result || check_reseller_client_result.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: "No user found with the provided retr_user_id",
-          });
-        }
-
-        if (check_reseller_client_result[0].user_type != 'reseller') {
-          return res.status(400).json({
-            success: false,
-            message: "The provided retr_user_id is not of type 'reseller' ",
-          });
-        }
-
-        const selectQuery = `
-      SELECT sms_cost, voice_cost 
-      FROM db_authkey.tbl_user_pricelist_copy 
-      WHERE user_id = ? AND country_code = ?
-    `;
-        const [userPricing] = await db(selectQuery, [retr_user_id, country_code]);
-
-        if (!userPricing) {
-          return res.status(404).json({ success: false, message: " pricing data not found" });
-        }
-
-        const { sms_cost: currentSmsCost, voice_cost: currentVoiceCost } = userPricing;
-
-        if (sms_cost && sms_cost <= currentSmsCost) {
-          return res.status(400).json({
-            success: false,
-            message: `New sms_cost (${sms_cost}) must be greater than the current sms_cost (${currentSmsCost})`
-          });
-        }
-
-        if (voice_cost && voice_cost <= currentVoiceCost) {
-          return res.status(400).json({
-            success: false,
-            message: `New voice_cost (${voice_cost}) must be greater than the current voice_cost (${currentVoiceCost})`
-          });
-        }
-        const updateQuery = `
-    UPDATE db_authkey.tbl_user_pricelist_copy 
-    SET sms_cost = ?, voice_cost = ?, 
-    WHERE user_id = ? AND country_code = ?
-  `;
-        await db(updateQuery, [sms_cost, voice_cost, retr_user_id, country_code]);
-        await HistorySchema.create({
-          user_id: retr_user_id,
-          country_code: country_code,
-          sms_cost: sms_cost || null,
-          voice_cost: voice_cost || null,
-          channel: "sms , voice",
-          action: "update",
-          created_date: todayDateTime(),
-        });
-        return res.status(200).json({
-          success: true,
-          message: "Pricing updated successfully "
-        });
-      }
-
-    } else {
+    }  else {
       return res
         .status(400)
         .json({ success: false, message: "Invalid Method" });
