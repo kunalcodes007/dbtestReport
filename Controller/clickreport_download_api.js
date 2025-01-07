@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
-const auth = require("../Middleware/mongoAuth");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const urlShortLinkModel = require("../Models/urlShortLinkSchema");
+const auth = require("../middleware/auth");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const urlShortLinkModel = require("../model/urlShortLinkSchema");
 const XLSX = require("xlsx");
+
 
 router.all(
   "/clickreport_download_api_csv",
