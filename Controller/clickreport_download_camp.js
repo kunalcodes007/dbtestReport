@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const {db} = require("../config/databaseconnection");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const auth = require("../middleware/auth");
-const urlShortLinkModel = require("../model/urlShortLinkSchema");
+const db = require("../config/databaseconnection");
+const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
+const auth = require("../Middleware/mongoAuth");
+const urlShortLinkModel = require("../Models/urlShortLinkSchema");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
+
 router.all(
   "/clickreport_download_camp_csv",
   auth,
@@ -21,7 +22,7 @@ router.all(
     }
 
     if (resdata.method === "clickreport_download_camp_csv") {
-      const { user_id, token, submit_via } = resdata;
+      const { user_id, token, submit_via,fromdate,todate } = resdata;
       if (!user_id || !token || !submit_via) {
         return res.status(400).json({
           success: false,
@@ -38,8 +39,13 @@ router.all(
       const data = await urlShortLinkModel.aggregate([
         {
           $match: {
-            submit_via,
+            submit_via,        
+            url_clickcount:{$gt:0},
             user_id: parseInt(user_id),
+            created: {
+              $gte: `${resdata.fromdate} 00:00:00`,
+              $lte: `${resdata.todate} 23:59:59`,
+            },
           },
         },
         {
