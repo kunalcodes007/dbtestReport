@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/databaseconnection");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const auth = require("../Middleware/mongoAuth");
-const urlShortLinkModel = require("../Models/urlShortLinkSchema");
+const {db} = require("../config/databaseconnection");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const auth = require("../middleware/auth");
+const urlShortLinkModel = require("../model/urlShortLinkSchema");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
-
 router.all(
   "/clickreport_download_camp_csv",
   auth,
