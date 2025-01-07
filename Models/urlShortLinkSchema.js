@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const todayDateTime = require("../Utils/todayDateTime");
+const { mongodb_authkey_0kb } = require('../config/mongoconnection');
 
 const urlShortLinkSchema = new mongoose.Schema(
   {
@@ -17,9 +19,11 @@ const urlShortLinkSchema = new mongoose.Schema(
     country_code: { type: String, required: true },
     created: {
       type: String,
-      // default: () => new Date().toISOString().slice(0, 19).replace("T", " "),
+      // default: todayDateTime(),
+    
     }},
   { collection: "url_short_link_withtrack_whatsapp" } 
 );
 
-module.exports = mongoose.model("url_short_link_withtrack_whatsapp", urlShortLinkSchema);
+
+module.exports = mongodb_authkey_0kb.model("url_short_link_withtrack_whatsapp", urlShortLinkSchema);
