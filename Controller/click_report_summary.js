@@ -4,7 +4,7 @@ const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
 const auth = require("../middleware/auth");
 const urlShortLinkSchema=require("../Models/urlShortLinkSchema")
 const {db} = require("../config/databaseconnection");
-router.all("/click_report_summary",Auth,catchAsyncErrors(async(req,res,next)=>{
+router.all("/click_report_summary",auth,catchAsyncErrors(async(req,res,next)=>{
   let resdata;
   if (Object.keys(req.body).length > 0) {
     resdata = req.body;
