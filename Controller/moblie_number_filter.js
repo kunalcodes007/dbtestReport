@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/databaseconnection");
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const Auth = require("../Middleware/mongoAuth");
+const {db} = require("../config/databaseconnection");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const auth = require("../middleware/auth");
 
-router.all("/mobile_number_filter", Auth, catchAsyncErrors(async (req, res, next) => {
+router.all("/mobile_number_filter", auth, catchAsyncErrors(async (req, res, next) => {
     let resdata;
     if (Object.keys(req.body).length > 0) {
         resdata = req.body;
