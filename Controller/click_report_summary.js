@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const {db} = require("../config/databaseconnection");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const auth = require("../middleware/auth");
-const urlShortLinkModel = require("../model/urlShortLinkSchema");
+const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
+const Auth = require("../Middleware/Auth");
+const urlShortLinkSchema=require("../Models/urlShortLinkSchema")
 
-
-router.all("/click_report_summary",auth,catchAsyncErrors(async(req,res,next)=>{
+router.all("/click_report_summary",Auth,catchAsyncErrors(async(req,res,next)=>{
   let resdata;
   if (Object.keys(req.body).length > 0) {
     resdata = req.body;
@@ -32,42 +30,44 @@ router.all("/click_report_summary",auth,catchAsyncErrors(async(req,res,next)=>{
 
     const api_result = await urlShortLinkSchema.aggregate([
       {
-          $addFields: {
-              createdDate: { 
-                  $dateFromString: { dateString: "$created" } 
-              }
+        $addFields: {
+          createdDate: {
+            $dateFromString: { dateString: "$created" }
           }
+        }
       },
       {
-          $match: {
-              user_id: parseInt(user_id),
-              submit_via: submit_via,
-              createdDate: {
-                  $gte: new Date(fromdate),
-                  $lte: new Date(todate)
-              }
+        $match: {
+          user_id: parseInt(user_id),
+          submit_via: submit_via,
+          createdDate: {
+            $gte: new Date(fromdate),
+            $lte: new Date(todate)
           }
+        }
       },
       {
-          $group: {
-              _id: {
-                  date: {
-                      $dateToString: { format: "%Y-%m-%d", date: "$createdDate" }
-                  },
-                  total_count: { $sum: "$url_clickcount" }
-              },
-          }
+        $group: {
+          _id: {
+            date: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdDate" }
+            },
+            total_count: { $sum: "$url_clickcount" }
+          },
+        }
       },
       {
-          $sort: { "_id.date": 1 } 
+        $sort: { "_id.date": 1 } // Sort by date in ascending order
       }
-  ]);
+    ]);
 
- return res.status(200).json({
-   success: true,
-   data: api_result.length > 0 ? api_result[0] : { total_count: 0 }
-});
-
+    if(!api_result || api_result.length == 0){
+      return res.status(400).json({success:false,message:"no record found"})
+    }
+      return res.status(200).json({
+       success: true,
+       data: api_result 
+   });
  }else if(resdata.method === "click_camp_report_summary"){
     const {fromdate,todate,user_id,submit_via}=resdata;
     if(!fromdate){
