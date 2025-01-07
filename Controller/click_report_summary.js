@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const Auth = require("../Middleware/Auth");
-const urlShortLinkSchema=require("../Models/urlShortLinkSchema")
+const {db} = require("../config/databaseconnection");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const auth = require("../middleware/auth");
+const urlShortLinkModel = require("../model/urlShortLinkSchema");
 
-router.all("/click_report_summary",Auth,catchAsyncErrors(async(req,res,next)=>{
+
+router.all("/click_report_summary",auth,catchAsyncErrors(async(req,res,next)=>{
   let resdata;
   if (Object.keys(req.body).length > 0) {
     resdata = req.body;
