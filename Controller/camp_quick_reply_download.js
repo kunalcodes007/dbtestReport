@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
-const auth = require("../Middleware/mongoAuth");
+const Auth = require("../Middleware/Auth");
 const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
 const camp_quick_reply_Schema = require("../Models/campquickreplySchema");
 const XLSX = require("xlsx");
@@ -21,7 +21,7 @@ router.all(
     }
 
     if (resdata.method === "camp_quick_reply_download") {
-      const { user_id, token, fromdate, todate, camp_id, submit_via } = resdata;
+      const { user_id, token, fromdate, todate, submit_via } = resdata;
 
       if (!user_id) {
         return res.status(400).json({
@@ -53,16 +53,9 @@ router.all(
         createdAt: { $gte: fromdate, $lte: todate },
       };
 
-      if (submit_via === "pannel") {
-        if (!camp_id) {
-          return res.status(400).json({
-            success: false,
-            message: "camp_id is required ",
-          });
-        }
+      if (submit_via === "PANNEL") {
         query.submit_via="PANNEL";
-        query.camp_id = camp_id;
-      } else if (submit_via === "api") {
+      } else if (submit_via === "API") {
         query.submit_via = "API";
       }
 
@@ -77,6 +70,7 @@ router.all(
         createdAt: 1,
       });
 
+        console.log(data)
       if (!data.length) {
         return res.status(404).json({
           success: false,
