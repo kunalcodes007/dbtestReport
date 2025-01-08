@@ -2,11 +2,10 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
-const Auth = require("../Middleware/Auth");
+const auth = require("../middleware/auth");
 const catchAsyncErrors = require("../Middleware/catchAsyncErrors");
-const camp_quick_reply_Schema = require("../Models/campquickreplySchema");
+const camp_quick_reply_Schema = require(".../model/campquickreplySchema");
 const XLSX = require("xlsx");
-
 router.all(
   "/camp_quick_reply_download",
   auth,
